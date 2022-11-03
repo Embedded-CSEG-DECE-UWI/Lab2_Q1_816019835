@@ -97,7 +97,7 @@ static void gpio_task_2_sharingPin( void *pvParameters )
        if ( xSemaphore( xSemaphore, ( TickType_t _ 10 ) == pdTrue )
           /*Accessing shared resources , GPIO pin 2
 	   * Turning off the LED connected to GPIO pin 2 */
-          io_conf.pin_bit mask = 
+          //io_conf.pin_bit mask = 
 
 }
 
