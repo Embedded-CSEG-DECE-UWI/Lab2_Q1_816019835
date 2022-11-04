@@ -89,7 +89,7 @@ static void gpio_task_1_sharingPin( void * pvParameters )
         {
        /* Accessing shared resources , GPIO pin 2 Turning on the LED connected to GPIO pin 2 */
 	    gpio_config_t io_conf;
-        print("Timer for 0.5 s\n");
+        printf("Timer for 0.5 s\n");
        	io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
        	gpio_config(&io_conf);
         xTimerStart(one_shot_Timer, 20 );
@@ -101,22 +101,21 @@ static void gpio_task_1_sharingPin( void * pvParameters )
        }
        	
     }
-
+    else{
+	    /*Semaphore was not obtain and therefore connot access the shared resource safely. */
+	    printf("Waiting for the semaphore to release resource");
+    }
     /*Finished accessing shared resource. Release the semaphore. */ 
     xSemaphoreGive( xSemaphore );
-    else{
-        /*Semaphore was not obtain and therefore cannot access the shared resoucre safely. */
-        printf("Waiting for the semaphore to release resource");
-    }
 }
 
 /*static void gpio_task_2_sharingPin( void *pvParameters )
 {
     if (xSemaphore != NULL ){
-       /*See if we can obtain the semaphore. If the semaphore is not 
+       See if we can obtain the semaphore. If the semaphore is not 
 	* available wait 10 ticks to see if it becomes free. 
        if ( xSemaphore( xSemaphore, ( TickType_t _ 10 ) == pdTrue ) ){
-          /*Accessing shared resources , GPIO pin 2
+        Accessing shared resources , GPIO pin 2
 	     * Turning off the LED connected to GPIO pin 2 
           //io_conf.pin_bit mask = 
         }
