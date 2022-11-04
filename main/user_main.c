@@ -14,6 +14,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
@@ -38,12 +39,11 @@ static const char *TAG = "main";
  *
  */
 
-#define GPIO_OUTPUT_IO_0    0
-#define GPIO_OUTPUT_PIN_SEL (1ULL<<GPIO_OUTPUT_IO_0)
-#define GPIO_INPUT_IO_0     2
-#define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0) 
+#define GPIO_OUTPUT_IO_0     2
+#define GPIO_OUTPUT_PIN_SEL  (1ULL<<GPIO_OUTPUT_IO_0) 
 
-static xQueueHandle gpio_evt_queue = NULL;
+//static xQueueHandle gpio_evt_queue = NULL;
+SemaphoreHandle_t xSemaphore = NULL;
 
 /*A mutex must be created in a task because the task that owns the mutex 'inherits' the priority of the task attempting to 'take' the same mutex.*/
 
@@ -56,30 +56,32 @@ static void gpio_task_1_sharingPin( void * pvParameters )
         {
        /* Accessing shared resources , GPIO pin 2
 	* Turning on the LED connected to GPIO pin 2 */
-       io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-       gpio_config(&io_conf);
+	gpio_config_t io_conf;
 
-       long long int Tbgein = esp_timer_get_time();
-       print("Timer for 0.5 s\n");
-       long long int Tend = esp_timer_get_time();
-       float diff = ( Tend - Tbegin )/1000;
-       while (diff <= 500 ){
-	       Tend = esp_timer_get_time();
-	       diff = ( Tend - Tbegin )/1000;
+       	io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+       	gpio_config(&io_conf);
+
+       	long long int Tbegin = esp_timer_get_time();
+       	print("Timer for 0.5 s\n");
+       	long long int Tend = esp_timer_get_time();
+       	float diff = ( Tend - Tbegin )/1000;
+       	while (diff <= 500 ){
+	       	Tend = esp_timer_get_time();
+	       	diff = ( Tend - Tbegin )/1000;
        }
-       Tbegin = esp_timer_get_time();
-       printf("Actively waited for %u ms...\n", diff);
-       printf("Time for 1s\n");
-       Tend = esp_timer_get_time();
-       diff = ( Tend - Tbegin )/1000;
-       while (diff <= 1000 ){
-	       Tend = esp_timer_get_time();
-	       diff = ( Tend - Tbegin )/100;
+       	Tbegin = esp_timer_get_time();
+       	printf("Actively waited for %f ms...\n", diff);
+       	printf("Time for 1s\n");
+       	Tend = esp_timer_get_time();
+       	diff = ( Tend - Tbegin )/1000;
+       	while (diff <= 1000 ){
+	       	Tend = esp_timer_get_time();
+	       	diff = ( Tend - Tbegin )/100;
        }
-       printf("Delayed for %d ms...\n", diff);
+       	printf("Delayed for %f ms...\n", diff);
 
        /*Finished accessing shared resource. Release the semaphore. */ 
-       xSemaphoreGive( xSemaphore );
+       	xSemaphoreGive( xSemaphore );
         }
        else{
        /*Semaphore was not obtain and therefore 
@@ -89,7 +91,7 @@ static void gpio_task_1_sharingPin( void * pvParameters )
     }
 }
 
-static void gpio_task_2_sharingPin( void *pvParameters )
+/*static void gpio_task_2_sharingPin( void *pvParameters )
 {
     if (xSemaphore != NULL ){
        /*See if we can obtain the semaphore. If the semaphore is not 
@@ -100,8 +102,9 @@ static void gpio_task_2_sharingPin( void *pvParameters )
           //io_conf.pin_bit mask = 
 
 }
+}*/
 
-static void gpio_task_3_sharingPin(void *arg)
+/*static void gpio_task_3_sharingPin(void *arg)
 {
     uint32_t io_num3;
 
@@ -110,21 +113,27 @@ static void gpio_task_3_sharingPin(void *arg)
             ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num3, gpio_get_level(io_num3));
         }
     }
-}
+}*/
 
 void app_main(void)
 {
-    gpio_config_t io_conf;
 
     //Creating mutex
     xSemaphore = xSemaphoreCreateMutex();
     //start task1
     xTaskCreate(gpio_task_1_sharingPin, "gpio_task_1_sharingPin", 2048, NULL, 10, NULL);
     //start task2
-    xTaskCreate(gpio_task_2_sharingPin, "gpio_task_2_sharingPin", 2048, NULL, 10, NULL);
+   // xTaskCreate(gpio_task_2_sharingPin, "gpio_task_2_sharingPin", 2048, NULL, 10, NULL);
     //start task3
-    xTaskCreate(gpio_task_3_sharingPin, "gpio_task_3_sharingPin", 2048, NULL, 10, NULL);
+   // xTaskCreate(gpio_task_3_sharingPin, "gpio_task_3_sharingPin", 2048, NULL, 10, NULL);
+	int cnt = 0;
 
+	while (1) {
+	    ESP_LOGI(TAG, "cnt: %d\n", cnt++);
+            vTaskDelay(1000 / portTICK_RATE_MS);
+	    printf("Check !");
+            gpio_set_level(GPIO_OUTPUT_IO_0, cnt % 2);
+    }
 }
 
 
