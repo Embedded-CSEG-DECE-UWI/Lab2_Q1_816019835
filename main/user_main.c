@@ -43,92 +43,119 @@ static const char *TAG = "main";
 
 //Global variables
 //static xQueueHandle gpio_evt_queue = NULL;
-SemaphoreHandle_t xSemaphore = NULL;
-//An array to hold handles to the created timers.
-TimerHandle_t one_shot_Timer = NULL;
+static SemaphoreHandle_t xSemaphore = NULL;
+
+static TimerHandle_t one_shot_Timer = NULL;
+
+static TaskHandle_t Handle1 = NULL;
+
+static TaskHandle_t Handle2 = NULL;
+
+static TaskHandle_t Handle3 = NULL;
+
+static uint32_t timerCount = 0;
 
 void vTimerCallback( TimerHandle_t xTimer )
- {
-    /* The timer expired, therefore 0.5 seconds must have passed since the GPIO pin has been turned on. Do a task task Delay for 1 second. */
+{
+    timerCount = 0;
+    // The timer expired, therefore 0.5 seconds must have passed since the GPIO pin has been turned on. Do a task task Delay for 1 second. 
     printf("Actively waited for 0.5s...\n");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    printf("Delayed for 1s...\n");
+    timerCount ++;
+   // vTaskDelay(1000 / portTICK_PERIOD_MS);
+   // printf("Delayed for 1s...\n");
     
  }
 
-static void gpio_task_1_sharingPin( void * pvParameters )
+static void gpio_task_1_sharingPin( void *arg )
 {
-    /* Create then start some timer.  Starting the timer before the RTOS scheduler has been started means the timers will start running immediately that the RTOS scheduler starts.*/
-
-    one_shot_Timer = xTimerCreate
-    ( /* Just a text name, not used by the RTOS kernel. */
-        "one-shot Timer",
-     /* The timer period in ms, must be greater than 0. */
-        pdMS_TO_TICKS( 500 ),
-     /* The timer will not auto-reload itself when it expires. */
-        pdFALSE,
-     /* The ID is used to store a count of the number of times the timer has expired, which is initialised to 0. */
-        ( void * ) 0,
-     /* Timer calls the callback when it expires. */
-        vTimerCallback
-    );
-    if( one_shot_Timer == NULL )
+    for (;;)
     {
-        printf(" The timer was not created.\n");
-    }
-    else
+    if ( xSemaphore != NULL )
     {
-        //Waiting for 1 second to try starting timer
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        printf("Starting Timer...\n");
-    }
-
-    if ( xSemaphore != NULL ){
        /* See if we can obtain the semaphore.  If the semaphore is not available wait 10 ticks to see if it becomes free. */
        if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
         {
        /* Accessing shared resources , GPIO pin 2 Turning on the LED connected to GPIO pin 2 */
-	    gpio_config_t io_conf;
-        printf("Timer for 0.5 s\n");
-       	io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-       	gpio_config(&io_conf);
-        xTimerStart(one_shot_Timer, 20 );
-        //Start timer and wait for 20 ticks if command queue is full;
-        if( xTimerReset( one_shot_Timer, 20 ) != pdPASS )
-            {
-                printf("The timer could not be set into the Active state. ");
-             }
-       }
-       	
+        	printf("Timer for 0.5 s\n");
+		gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+		printf("Level set high\n");
+        	xTimerReset(one_shot_Timer, 10 );
+                printf("Checking xTimerStart function 1\n");
+
+        //Start timer and wait for 10 ticks if command queue is full;
+       		if( xTimerReset( one_shot_Timer, 10 ) != pdPASS )
+                 {
+                printf("The timer could not be set into the Active state. high\n ");
+                 }
+                else
+       	          {
+	         printf("Timer was activated high\n");
+                   }
+		 //timerCount = ( uint32_t ) pvTimerGetTimerID( one_shot_Timer );
+		 printf("%d\n",timerCount);
+		 while ( timerCount != 1 )
+		 {
+
+		 }
+
+
+           /*Finished accessing shared resource. Release the semaphore. */
+           xSemaphoreGive( xSemaphore );
+   	   printf("Giving semaphore\n");
+	   vTaskDelay(1000 / portTICK_PERIOD_MS);
+	   printf("Delayed for 1s after task 1...\n");
+
     }
-    else{
+    else
+    {
 	    /*Semaphore was not obtain and therefore connot access the shared resource safely. */
-	    printf("Waiting for the semaphore to release resource");
+	    printf("Waiting for the semaphore to release resource from low\n");
     }
-    /*Finished accessing shared resource. Release the semaphore. */ 
-    xSemaphoreGive( xSemaphore );
+}
+}
 }
 
-/*static void gpio_task_2_sharingPin( void *pvParameters )
+static void gpio_task_2_sharingPin( void *arg )
 {
-    if (xSemaphore != NULL ){
-       See if we can obtain the semaphore. If the semaphore is not 
-	* available wait 10 ticks to see if it becomes free. 
-       if ( xSemaphore( xSemaphore, ( TickType_t _ 10 ) == pdTrue ) ){
-        Accessing shared resources , GPIO pin 2
-	     * Turning off the LED connected to GPIO pin 2 
-          //io_conf.pin_bit mask = 
-        }
-    #define GPIO_INPUT_IO_0   0
-    #define GPIO_INPUT_PIN_SEL  (1ULL<<GPIO_INPUT_IO_0) 
-    gpio_config_t io_conf;
+    for (;;)
+    {
+    if ( xSemaphore != NULL )
+    {
+       /* See if we can obtain the semaphore.  If the semaphore is not available wait 10 ticks to see if it becomes free. */
+       if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+        {
+       /* Accessing shared resources , GPIO pin 2 Turning on the LED connected to GPIO pin 2 */
+                printf("Timer for 0.5 s\n");
+                gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+                printf("Level set low\n");
+                xTimerReset(one_shot_Timer, 10 );
+                printf("Checking xTimerStart function 2\n");
+        //Start timer and wait for 10 ticks if command queue is full;
+       		if( xTimerReset( one_shot_Timer, 10 ) != pdPASS )
+                  {
+                printf("The timer could not be set into the Active state. low\n");
+                  }
+       else
+          {
+               printf("Timer was activated low\n");
+       }
+           /*Finished accessing shared resource. Release the semaphore. */
+           xSemaphoreGive( xSemaphore );
+           printf("Giving semaphore low\n");
+           vTaskDelay(1000 / portTICK_PERIOD_MS);
+           printf("Delayed for 1s after task 2...\n");
 
-    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-    gpio_config(&io_conf);
+    }
+    else
+    {
+            /*Semaphore was not obtain and therefore connot access the shared resource safely. */
+            printf("Waiting for the semaphore to release resource from high\n");
+    }
 }
-}*/
+}
+}
 
-/*static void gpio_task_3_sharingPin(void *arg)
+/*static void gpio_task_3_message(void *arg)
 {
     uint32_t io_num3;
 
@@ -141,23 +168,65 @@ static void gpio_task_1_sharingPin( void * pvParameters )
 
 void app_main(void)
 {
+    one_shot_Timer = xTimerCreate
+    (//Just a test name, not used by the RTOS kernel.
+     "one-shot Timer",
+     //The timer period in ms, must be greater than 0.
+     (500 / portTICK_PERIOD_MS ),
+     //The timer will not auto-reload itsef when it expires.
+     pdFALSE,
+     //The ID is used to store a count of the number of the times the timer has expired,
+     (void*) 0,
+     //Timer calls the callback function when it expires.
+     vTimerCallback
+    );
+    if( one_shot_Timer == NULL )
+    {
+	    printf("The timer was not created. \n");
+    }
+    else
+    {
+	    if( xTimerStart( one_shot_Timer, 10 ) != pdPASS )
+	    {
+		    printf("checking if timer started\n");
+	    }
+	    //Waiting for 1 second to try starting the time
+	    printf("Starting Timer\n");
+    }
+
+    gpio_config_t io_conf;
+    //disable interrupt
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    //set as output mode
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    //bit mask of the pins that you want to e.g GPIO 2
+    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
+    //disable pull-down mode
+    io_conf.pull_down_en = 0;
+    //disable pull-up mode
+    io_conf.pull_up_en = 0;
+    //configure GPIO with the given settings
+    gpio_config( &io_conf ) ;
+
     
+
     //Creating mutex
     xSemaphore = xSemaphoreCreateMutex();
     //start task1
-    xTaskCreate(gpio_task_1_sharingPin, "gpio_task_1_sharingPin", 2048, NULL, 10, NULL);
+    Handle1 = xTaskCreate(gpio_task_1_sharingPin, "gpio_task_1_sharingPin", 2048, NULL, 10, NULL);
     //start task2
-   // xTaskCreate(gpio_task_2_sharingPin, "gpio_task_2_sharingPin", 2048, NULL, 10, NULL);
+    Handle2 = xTaskCreate(gpio_task_2_sharingPin, "gpio_task_2_sharingPin", 2048, NULL, 10, NULL);
     //start task3
-   // xTaskCreate(gpio_task_3_sharingPin, "gpio_task_3_sharingPin", 2048, NULL, 10, NULL);
+   // Handle3 = xTaskCreate(gpio_task_3_message, "gpio_task_3_message", 2048, NULL, 10, NULL);
    /* Starting the RTOS scheduler will start the timer running as it has already been set into the active state. */
-    vTaskStartScheduler();
-	int cnt = 0;
-
-	while (1) {
+    int cnt = 0;
+    while (1)
+    {
 	    ESP_LOGI(TAG, "cnt: %d\n", cnt++);
-        vTaskDelay(1000 / portTICK_RATE_MS);
-	    printf("Check !");
-        gpio_set_level(GPIO_OUTPUT_IO_0, cnt % 2);
+	    printf("Checker\n");
+	    vTaskDelay( 1000/ portTICK_PERIOD_MS);
+
     }
+
+    //vTaskStartScheduler();
 }
