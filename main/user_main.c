@@ -29,15 +29,9 @@ static const char *status_message = "Status message: ";
 
 /**
  * Brief:
- * This test code shows how to configure gpio and how to use gpio interrupt.
- *
- * GPIO status:
+ * This test code shows how to configure gpio and how to use mutex
+ * GPIO status messages
  * GPIO2: output
- *
- * Test:
- * Connect GPIO0 with GPIO2
- * Generate pulses on GPIO2, that triggers interrupt on GPIO0
- *
  */
 
 #define GPIO_OUTPUT_IO_0     2
@@ -130,12 +124,6 @@ static void gpio_task_3_message(void *arg)
 {
     for (;;)
     {
-     // if ( xSemaphore != NULL )
-   // {
-       /* See if we can obtain the semaphore.  If the semaphore is not available wait 10 ticks to see if it becomes free. */
-        // if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
-       // {
-       /* Accessing shared resources , GPIO pin 2 Turning on the LED connected to GPIO pin 2 */
 
             if (gpio_get_level(GPIO_OUTPUT_IO_0))
         	{
@@ -146,13 +134,6 @@ static void gpio_task_3_message(void *arg)
 	          ESP_LOGI(status_message, "Led is currently off, GPIO2 is low\n");
 	        }
 	    vTaskDelay(1000 / portTICK_PERIOD_MS);
-        // }
-         /*else
-            {
-            //Semaphore was not obtain and therefore connot access the shared resource safely. 
-                printf("Waiting for the semaphore to release resource from high\n");
-            }*/
-   // }
 }
 }
 
@@ -172,8 +153,7 @@ void app_main(void)
     //configure GPIO with the given settings
     gpio_config( &io_conf ) ;
 
-    
-
+  
     //Creating mutex
     xSemaphore = xSemaphoreCreateMutex();
     //start task1
