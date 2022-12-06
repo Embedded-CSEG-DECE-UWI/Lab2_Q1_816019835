@@ -24,8 +24,8 @@
 #include "esp_system.h"
 
 static const char *TAG = "main";
-static const char *active_delay_tag = "Actively waiting ...";
-static const char *status_message = "Status message: ";
+static const char *active_delay_tag = "Actively waited ...";
+static const char *status_message = "Status message";
 
 /**
  * Brief:
@@ -72,8 +72,7 @@ static void gpio_task_1_sharingPin( void *arg )
         {
        /* Accessing shared resources , GPIO pin 2 Turning on the LED connected to GPIO pin 2 */
 		gpio_set_level(GPIO_OUTPUT_IO_0, 1);
-		printf("Level set high\n");
-        	active_delay();
+                active_delay();
 		ESP_LOGI(active_delay_tag, "500ms\n");
 
        /*Finished accessing shared resource. Release the semaphore. */
@@ -101,7 +100,6 @@ static void gpio_task_2_sharingPin( void *arg )
         {
        /* Accessing shared resources , GPIO pin 2 Turning on the LED connected to GPIO pin 2 */
                 gpio_set_level(GPIO_OUTPUT_IO_0, 0);
-                printf("Level set low\n");
                 active_delay();
                 ESP_LOGI(active_delay_tag, "500ms\n");
 
