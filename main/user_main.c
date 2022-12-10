@@ -122,7 +122,11 @@ static void gpio_task_3_message(void *arg)
 {
     for (;;)
     {
-
+	    if ( xSemaphore != NULL )
+    {
+       /* See if we can obtain the semaphore.  If the semaphore is not available wait 10 ticks to see if it becomes free. */
+       if( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE )
+        {
             if (gpio_get_level(GPIO_OUTPUT_IO_0))
         	{
 	          ESP_LOGI(status_message,"Led is currently on, GPIO2 is high\n");
@@ -132,6 +136,14 @@ static void gpio_task_3_message(void *arg)
 	          ESP_LOGI(status_message, "Led is currently off, GPIO2 is low\n");
 	        }
 	    vTaskDelay(1000 / portTICK_PERIOD_MS);
+	    }
+    else
+    {
+            /*Semaphore was not obtain and therefore connot access the shared resource safely. */
+            printf("Waiting for the semaphore to release resource from high\n");
+    }
+
+}
 }
 }
 
